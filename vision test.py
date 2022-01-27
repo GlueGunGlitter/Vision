@@ -1,5 +1,7 @@
 import platform
+#from tkinter.messagebox import NO
 import cv2
+from cv2 import threshold
 import numpy as np
 import logging
 import math
@@ -42,6 +44,7 @@ def RpiMain():
     NetworkTables.initialize(server=ip)
 
     sd = NetworkTables.getTable("SmartDashboard")
+    
 
     print('connected')
     while True:
@@ -54,34 +57,27 @@ def RpiMain():
             continue
 
         #process and output image
-        thresholded_img, detected_shapes_img, center, _ = image_processor(frame,[[60,100,60],[100,255,255]])
+        thresh = sd.getValue("threshold_pi", (0,0,0,0,0,0))
+        #print(thresh)
+        thresholded_img, detected_shapes_img, center, cleared_img = image_processor(frame, [thresh[0:3],thresh[3:6]])
         
-        output_stream.putFrame(detected_shapes_img)
+
+
+        output_stream.putFrame((frame, thresholded_img, detected_shapes_img)[int(sd.getNumber("stream_type_pi", 0))])
 
         #publish data to NetworkTables
-        Xang, Yang = PixelsToAngles(center[0],center[1],{"resx": width, "resy": height, "hfov": 51.6, "vfov": 48.6})
-        distance = Dist(Yang,2.2,2)
+        Xang, Yang = PixelsToAngles(center[0],center[1],{"resx": width, "resy": height, "hfov": 51.6, "vfov": 29})
+        #print(math.degrees(Yang))
+        distance = Dist(25,Yang,173,62)
         #print(distance)
 
         sd.putNumber("cx", center[0])
-        sd.putNumber("cy", center[1])      
+        sd.putNumber("cy", center[1]) 
         sd.putNumber('distance', distance)
         sd.putNumber('Xang', Xang)
-        '''
-        pre_rio2pi = None
-        sd.putNumber('time', tm.time())
-        print(type(sd.getNumber('time', 0)))
-
+        sd.putNumber('Yang', Yang)
+    
         
-        while True:
-
-            rio2pi= sd.getNumber("rio2pi", None)
-            if pre_rio2pi != rio2pi:
-                print(f"time: {tm.time()-rio2pi}")
-
-                sd.putNumber('pi2rio', tm.time())
-                pre_rio2pi = rio2pi
-        '''
 
 def WindowsMain():
     cap = cv2.VideoCapture(0)
@@ -97,18 +93,18 @@ def WindowsMain():
         if cv2.waitKey(1) == ord('q'):
             break
 
-        Xang, Yang = PixelsToAngles(center[0], center[1], {"resx": 640, "resy": 480, "hfov": 57.15, "vfov": 48.6})
+        Xang, Yang = PixelsToAngles(center[0], center[1], {"resx": 640, "resy": 480, "hfov": 57.15, "vfov": 36})
         #print(Xang, Yang)
 
-        distance = Dist(Yang,27,2.2)
+        distance = Dist(17,Yang,173,62.5)
         #print(distance)
 
 #a1 = camera angle, a2 = Y angle to the target, th = target height, ch = camera height,
-def Dist(angle,th,ch):
-    if angle == 0:
+def Dist(camera_pitch,pitch,th,ch):
+    if pitch == 0:
         return 0
     else:
-        distance = ((th-ch)/math.tan(angle))
+        distance = ((th-ch)/math.tan(math.radians(camera_pitch) + pitch))
         #print(distance)
     return distance
 
@@ -164,19 +160,21 @@ def image_processor(input_img, threshold_parameters):
                 cv2.drawContours(img, [c], -1, color = (0, 0, 255), thickness = 2)
                 #draw rectangle over largest contour
                 x,y,w,h = cv2.boundingRect(c)
-                #print(w*h)
+                print(w*h)
                 cv2.rectangle(img,(x,y),(x+w,y+h),(0,255,0),2)
 
                 #contour center of mass
                 center = [int(M['m10']/M['m00']),int(M['m01']/M['m00'])]
                 cv2.circle(img,(center[0],center[1]),2,(255,0,0),2)
 
+    
+
         return img, center
 
     #function code
     thresholded_img = threshold(input_img, threshold_parameters[0], threshold_parameters[1])
     cleared_img = clear_noise(thresholded_img)
-    detected_shapes_img, center= detect_shapes(input_img, cleared_img)
+    detected_shapes_img, center= detect_shapes(input_img, thresholded_img)
 
     return thresholded_img, detected_shapes_img, center, cleared_img
 
