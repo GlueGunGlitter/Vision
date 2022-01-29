@@ -57,7 +57,7 @@ def RpiMain():
             continue
 
         #process and output image
-        thresh = sd.getValue("threshold_pi", (0,0,0,0,0,0))
+        thresh = sd.getValue("threshold_pi", (60,50,129,102,255,255))
         #print(thresh)
         thresholded_img, detected_shapes_img, center, cleared_img = image_processor(frame, [thresh[0:3],thresh[3:6]])
         
@@ -68,7 +68,7 @@ def RpiMain():
         #publish data to NetworkTables
         Xang, Yang = PixelsToAngles(center[0],center[1],{"resx": width, "resy": height, "hfov": 51.6, "vfov": 29})
         #print(math.degrees(Yang))
-        distance = Dist(25,Yang,173,62)
+        distance = Dist(25,Yang,261,62)
         #print(distance)
 
         sd.putNumber("cx", center[0])
@@ -151,8 +151,14 @@ def image_processor(input_img, threshold_parameters):
         img = cv2.cvtColor(img, cv2.COLOR_RGB2RGBA)
         #find contours
         _,contours,_ = cv2.findContours(binary_img, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        
         center = [0,0]
         if len(contours) != 0:
+            for c in contours:
+                M = cv2.moments(c)
+                x,y,w,h = cv2.boundingRect(c)
+                cv2.rectangle(img,(x,y),(x+w,y+h),(0,255,0),2)
+            '''
             #draw largest contour
             c = max(contours, key = cv2.contourArea)
             M = cv2.moments(c)
@@ -166,7 +172,7 @@ def image_processor(input_img, threshold_parameters):
                 #contour center of mass
                 center = [int(M['m10']/M['m00']),int(M['m01']/M['m00'])]
                 cv2.circle(img,(center[0],center[1]),2,(255,0,0),2)
-
+            '''
     
 
         return img, center
