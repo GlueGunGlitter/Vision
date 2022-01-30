@@ -8,7 +8,7 @@ import math
 import json
 import time as tm
 
-import image_processor as ip
+import image_processor
 from calculations import *
 
 def RpiMain():
@@ -62,9 +62,8 @@ def RpiMain():
         #process and output image
         thresh = sd.getValue("threshold_pi", (60,50,129,102,255,255))
         #print(thresh)
-        thresholded_img, detected_shapes_img, center, cleared_img = ip.process(frame, [thresh[0:3],thresh[3:6]])
+        thresholded_img, detected_shapes_img, center, cleared_img = image_processor.process(frame, [thresh[0:3],thresh[3:6]])
         
-
 
         output_stream.putFrame((frame, thresholded_img, detected_shapes_img)[int(sd.getNumber("stream_type_pi", 0))])
 

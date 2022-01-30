@@ -11,11 +11,18 @@ def threshold(img, p_lower_limit, p_upper_limit):
 
     return frame_threshed
 
-def clear_noise(img):
+def erode(img):
     kernel = np.ones((3, 3), np.uint8)
-    img = cv2.erode(img, kernel, iterations = 2)
+    img = cv2.erode(img, kernel, iterations = 1)
 
     return img
+    
+def dilation(img):
+    kernel = np.ones((2, 3), np.uint8)
+    img = cv2.dilate(img, kernel, iterations = 1)
+
+    return img
+
 
 def detect_shapes(img, binary_img):
     img = cv2.cvtColor(img, cv2.COLOR_RGB2RGBA)
@@ -47,13 +54,15 @@ def find_target(detected_shapes, img):
             cv2.circle(img,(center[0],center[1]),2,(255,0,0),2)
         '''
 
-    return center
+    return center, img
     
 
 def process(input_img, threshold_parameters):
     thresholded_img = threshold(input_img, threshold_parameters[0], threshold_parameters[1])
-    cleared_img = clear_noise(thresholded_img)
-    detected_shapes = detect_shapes(cleared_img, thresholded_img)
+    cleared_img = erode(thresholded_img)
+    detected_shapes = detect_shapes(input_img, thresholded_img)
     
-    return find_target(detected_shapes, input_img)
+    center, detected_shapes_img = find_target(detected_shapes, input_img)
+    
+    return thresholded_img, detected_shapes_img, center, cleared_img
 
