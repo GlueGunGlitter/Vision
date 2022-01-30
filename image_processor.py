@@ -24,7 +24,7 @@ def detect_shapes(img, binary_img):
 
     return contours
 
-def find_target(detected_shapes):
+def find_target(detected_shapes, img):
     center = [0,0]
     if len(detected_shapes) != 0:
         for c in detected_shapes:
@@ -46,6 +46,8 @@ def find_target(detected_shapes):
             center = [int(M['m10']/M['m00']),int(M['m01']/M['m00'])]
             cv2.circle(img,(center[0],center[1]),2,(255,0,0),2)
         '''
+
+    return center
     
 
 def process(input_img, threshold_parameters):
@@ -53,5 +55,5 @@ def process(input_img, threshold_parameters):
     cleared_img = clear_noise(thresholded_img)
     detected_shapes = detect_shapes(cleared_img, thresholded_img)
     
-    return find_target(detected_shapes)
+    return find_target(detected_shapes, input_img)
 
