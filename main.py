@@ -62,7 +62,7 @@ def RpiMain():
         #process and output image
         thresh = sd.getValue("threshold_pi", (60,50,129,102,255,255))
         #print(thresh)
-        thresholded_img, detected_shapes_img, center, cleared_img = image_processor.process(frame, [thresh[0:3],thresh[3:6]])
+        thresholded_img, detected_shapes_img, img, center = image_processor.process(frame, [thresh[0:3],thresh[3:6]])
         
 
         output_stream.putFrame((frame, thresholded_img, detected_shapes_img)[int(sd.getNumber("stream_type_pi", 0))])

@@ -42,7 +42,6 @@ def dilate(img, kernel = np.ones((3, 3), np.uint8)):
 
     return img
 
-
 def detect_shapes(img, binary_img):
     img = cv2.cvtColor(img, cv2.COLOR_RGB2RGBA)
     #find contours
@@ -50,7 +49,7 @@ def detect_shapes(img, binary_img):
 
     return contours
 
-def filter_contours(contours, img):
+def find_target(contours, img):
     center = [0,0]
 
     if len(contours) != 0:
@@ -75,32 +74,19 @@ def filter_contours(contours, img):
         cv2.line(img, (x, 0), (x, 240), (255, 0, 255), thickness=1)
 
 
-
-        '''
-        #draw largest contour
-        c = max(contours, key = cv2.contourArea)
-        M = cv2.moments(c)
-        if M['m00'] !=0 :
-            cv2.drawContours(img, [c], -1, color = (0, 0, 255), thickness = 2)
-            #draw rectangle over largest contour
-            x,y,w,h = cv2.boundingRect(c)
-            print(w*h)
-            cv2.rectangle(img,(x,y),(x+w,y+h),(0,255,0),2)
-
-            #contour center of mass
-            center = [int(M['m10']/M['m00']),int(M['m01']/M['m00'])]
-            cv2.circle(img,(center[0],center[1]),2,(255,0,0),2)
-        '''
-
-    return center, img
+        return [int(M["m10"]/M["m00"]), int(M["m01"]/M["m00"])], img
     
 
-def process(input_img, threshold_parameters):
-    thresholded_img = threshold(input_img, threshold_parameters[0], threshold_parameters[1])
-    cleared_img = erode(thresholded_img)
-    detected_shapes = detect_shapes(input_img, thresholded_img)
-    
-    center, detected_shapes_img = find_target(detected_shapes, input_img)
-    
-    return thresholded_img, detected_shapes_img, center, cleared_img
+def process(img, threshold_parameters, img_height):
+    #only process the top part of the image
+    top = img[:int(img_height/2), :]
+    #threshold and clear noise
+    binary_img = threshold(top, threshold_parameters[0], threshold_parameters[1])
+    binary_img = erode(binary_img)
+    binary_img = dilate(binary_img, kernel = np.ones((3, 3), np.uint8))
+    #detect and filter contours
+    contours = detect_shapes(img, binary_img)
+    center, target_img = find_target(contours, img)
+
+    return binary_img, target_img, img, center
 
