@@ -2,6 +2,27 @@ import cv2
 from cv2 import threshold
 import numpy as np
 
+def find_median(contours, sort=False):
+    if sort:
+        contours = sorted(contours, key=lambda cnt: cv2.boundingRect(cnt)[0])
+
+    if len(contours)%2 == 0:
+        #print('even')
+        left_moments = cv2.moments(contours[int((len(contours)/2)-1)])
+        right_moments = cv2.moments(contours[int((len(contours)/2))])
+
+        x = int((int(left_moments['m10']/left_moments['m00']) + int(right_moments['m10']/right_moments['m00']))/2)
+        size = (left_moments['m00'] + right_moments['m00'])/2
+    else: 
+        #print('odd')
+
+        moments = cv2.moments(contours[int((len(contours)+1)/2-1)])
+        x = int(moments['m10']/moments['m00'])
+        size = moments['m00']
+    return x, size
+
+
+
 def threshold(img, p_lower_limit, p_upper_limit):
     lower_limit = np.array(p_lower_limit ,np.uint8)
     upper_limit = np.array(p_upper_limit ,np.uint8)
@@ -11,14 +32,12 @@ def threshold(img, p_lower_limit, p_upper_limit):
 
     return frame_threshed
 
-def erode(img):
-    kernel = np.ones((3, 3), np.uint8)
+def erode(img, kernel = np.ones((3, 3), np.uint8)):
     img = cv2.erode(img, kernel, iterations = 1)
 
     return img
     
-def dilation(img):
-    kernel = np.ones((2, 3), np.uint8)
+def dilate(img, kernel = np.ones((3, 3), np.uint8)):
     img = cv2.dilate(img, kernel, iterations = 1)
 
     return img
@@ -31,16 +50,35 @@ def detect_shapes(img, binary_img):
 
     return contours
 
-def find_target(detected_shapes, img):
+def filter_contours(contours, img):
     center = [0,0]
-    if len(detected_shapes) != 0:
-        for c in detected_shapes:
+
+    if len(contours) != 0:
+        
+        #get median size
+        _,size = find_median(contours,sort=True)
+
+        #print(median_size)
+        new_contours = []
+        for i, c in enumerate(contours):
             M = cv2.moments(c)
-            x,y,w,h = cv2.boundingRect(c)
-            cv2.rectangle(img,(x,y),(x+w,y+h),(0,255,0),2)
+
+            if M['m00'] < 1.5*size and  M['m00'] > 0.66*size:
+                new_contours.append(c)
+
+                x,y,w,h = cv2.boundingRect(c)
+                cv2.rectangle(img,(x,y),(x+w,y+h),(0,255,0),2)
+                cv2.putText(img,str(i),(x,y), cv2.FONT_HERSHEY_SIMPLEX, 0.3, (0, 255, 255), 2, cv2.LINE_AA)
+
+        x,_ = find_median(new_contours,sort=True)        
+        
+        cv2.line(img, (x, 0), (x, 240), (255, 0, 255), thickness=1)
+
+
+
         '''
         #draw largest contour
-        c = max(detected_shapes, key = cv2.contourArea)
+        c = max(contours, key = cv2.contourArea)
         M = cv2.moments(c)
         if M['m00'] !=0 :
             cv2.drawContours(img, [c], -1, color = (0, 0, 255), thickness = 2)
