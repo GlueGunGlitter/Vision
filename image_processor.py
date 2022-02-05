@@ -37,8 +37,8 @@ def erode(img, kernel = np.ones((3, 3), np.uint8)):
 
     return img
     
-def dilate(img, kernel = np.ones((3, 3), np.uint8)):
-    img = cv2.dilate(img, kernel, iterations = 1)
+def dilate(img, kernel = np.ones((3, 3), np.uint8), iterations = 1):
+    img = cv2.dilate(img, kernel, iterations = iterations)
 
     return img
 
@@ -46,6 +46,13 @@ def detect_shapes(img, binary_img):
     img = cv2.cvtColor(img, cv2.COLOR_RGB2RGBA)
     #find contours
     _,contours,_ = cv2.findContours(binary_img, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+
+    for i in range(len(contours)):
+
+        x,y,w,h = cv2.boundingRect(contours[i])
+
+        if w*h < 50 and w*h > 200:
+            contours.pop(i)
 
     return contours
 
@@ -82,8 +89,11 @@ def process(img, threshold_parameters, img_height):
     top = img[:int(img_height/2), :]
     #threshold and clear noise
     binary_img = threshold(top, threshold_parameters[0], threshold_parameters[1])
+    #cv2.imshow("t_img", binary_img)
+
     binary_img = erode(binary_img)
-    binary_img = dilate(binary_img, kernel = np.ones((3, 3), np.uint8))
+    binary_img = dilate(binary_img, kernel = np.ones((3, 3), np.uint8), iterations = 1)
+
     #detect and filter contours
     contours = detect_shapes(img, binary_img)
     center, target_img = find_target(contours, img)

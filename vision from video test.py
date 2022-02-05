@@ -3,6 +3,7 @@ import numpy as np
 
 import image_processor as imp
 from calculations import *
+import threshold_gui
 
 def Main():
     cap = cv2.VideoCapture('hub test.avi')
@@ -25,8 +26,15 @@ def Main():
 
             _, img = imp.filter_contours(contours,frame)
             '''
-            _, _, img,_ = imp.process(frame, [[60,50,129],[102,255,255]], height)
-            cv2.imshow("wwt", img)
+
+            threshold_values = threshold_gui.get_values()
+
+            try:
+                binary_img, _, img,_ = imp.process(frame, threshold_values, height)
+                cv2.imshow("wwt", img)
+                cv2.imshow("binary_img", binary_img)
+
+            except Exception as p: print(p)
         else:
             print('no video')
             cap.set(cv2.CAP_PROP_POS_FRAMES, 0)
@@ -41,4 +49,6 @@ def Main():
         distance = Dist(17,Yang,173,62.5)
         #print(distance)
         '''
+
+        threshold_gui.update()
 Main()
