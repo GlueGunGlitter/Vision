@@ -39,7 +39,7 @@ def RpiMain():
     #initialize NetworkTables
     logging.basicConfig(level=logging.DEBUG)
 
-    ip = "10.16.90.64"
+    ip = "10.16.90.15"
 
     #print(f"ip = {sys.argv[1]}")
 
@@ -61,11 +61,13 @@ def RpiMain():
 
         #process and output image
         thresh = sd.getValue("threshold_pi", (60,50,129,102,255,255))
-        #print(thresh)
-        thresholded_img, detected_shapes_img, img, center = image_processor.process(frame, [thresh[0:3],thresh[3:6]])
         
+        thresh_img, binary_img, img, center = image_processor.process(frame, [thresh[0:3],thresh[3:6]], height)
+        print(center)
 
-        output_stream.putFrame((frame, thresholded_img, detected_shapes_img)[int(sd.getNumber("stream_type_pi", 0))])
+        #thresh_img, binary_img, img, center = image_processor.single_contour(frame, [thresh[0:3],thresh[3:6]], height)
+
+        output_stream.putFrame((thresh_img, binary_img, img)[int(sd.getNumber("stream_type_pi", 0))])
 
         #publish data to NetworkTables
         Xang, Yang = PixelsToAngles(center[0],center[1],{"resx": width, "resy": height, "hfov": 51.6, "vfov": 29})
