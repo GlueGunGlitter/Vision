@@ -57,7 +57,6 @@ def detect_shapes(img, binary_img):
     return contours
 
 def find_target(contours, img):
-    center = [0,0]
     
     if len(contours) != 0:
         new_contours = []
@@ -82,8 +81,8 @@ def find_target(contours, img):
         cv2.line(img, (x, 0), (x, 240), (255, 0, 255), thickness=1)
         cv2.line(img, (0, y), (320, y), (255, 0, 255), thickness=1)
 
-        center = [x,y]
-    return center
+        return [x,y]
+    return [-1,-1]
     
 def process(img, threshold_parameters, img_height):
     #only process the top part of the image
