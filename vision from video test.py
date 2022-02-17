@@ -18,6 +18,7 @@ def Main():
         if ret:
             hreshold_values = threshold_gui.get_values()
             try:
+                '''
                 top = frame[:int(height/2), :]
                 thresh_img = imp.threshold(top, [60,50,129],[102,255,255])
                 binary_img = imp.erode(thresh_img, np.ones((4, 4), np.uint8))
@@ -32,14 +33,16 @@ def Main():
 
                 cv2.line(frame, (x, 0), (x, 240), (255, 0, 255), thickness=1)
                 cv2.line(frame, (0, y), (320, y), (255, 0, 255), thickness=1)
+                '''
 
-
-                #_, img = imp.find_target(contours,frame)                        
+                #_, img = imp.find_target(contours,frame)    
+                 
+                threshold_values = threshold_gui.get_values()                                 
             
-                #binary_img, _, img,_ = imp.process(frame, threshold_values, height)
+                binary_img, _, img,_ = imp.process(frame, threshold_values, height)
                 cv2.imshow("img", frame)
                 cv2.imshow("binary_img", binary_img)
-                cv2.imshow("thresh_img", thresh_img)
+                #cv2.imshow("thresh_img", thresh_img)
 
 
             except Exception as p: print(p)
